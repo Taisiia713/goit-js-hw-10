@@ -47,7 +47,19 @@
   border-color: rgba(128, 128, 128, 1);
   width: 272px;
   height: 40px;
+  color: #2e2f42;
+  outline: none;
 
+}
+
+
+#datetime-picker:hover,
+#datetime-picker:focus {
+  border-color: black;
+}
+
+#datetime-picker:active {
+  border-color: #4e75ff;
 }
 
 button {
@@ -63,11 +75,15 @@ button {
   font-size: 16px;
 }
 
-#datetime-picker:active {
-  border-color: rgba(78, 117, 255, 1);
-}
+
 
 button:active {
   background-color: rgba(78, 117, 255, 1);
+  color: #fff;
+}
+
+.btn-active:hover,
+.btn-active:focus {
+  background: #6c8cff;
   color: #fff;
 }

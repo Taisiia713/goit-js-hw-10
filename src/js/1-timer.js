@@ -3,91 +3,75 @@ import flatpickr from 'flatpickr';
 // Додатковий імпорт стилів
 import 'flatpickr/dist/flatpickr.min.css';
 
-// календар
+import iziToast from 'izitoast';
+import 'izitoast/dist/css/iziToast.min.css';
 
-const datePicker = flatpickr('#datetime-picker', {
+let userSelectedDate;
+let timeInterval;
+
+const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    const userSelectedDate = selectedDates[0];
-    const currentDate = new Date();
-    if (userSelectedDate <= currentDate) {
-      window.alert('Please choose a date in the future');
+    userSelectedDate = selectedDates[0];
+    timeInterval = userSelectedDate - new Date();
+    if (timeInterval < 1) {
+      iziToast.error({
+        color: 'red',
+        position: 'topRight',
+        message: `Please choose a date in the future`,
+      });
+    } else {
+      startButton.disabled = false;
+      inputTime.disabled = true;
+      startButton.classList.add(`btn-active`);
     }
   },
-});
-
-let intervalId = null;
-const startBtn = document.querySelector('[data-start]');
-const clockFace = document.querySelector('.value');
-let userSelectedDate = 0; // ?????????????????????????????????????????????????????///
-let time = 0; // ????????????????????????????????????????????????????????????????????????????????????????????
-
-startBtn.addEventListener('click', () => {
-  intervalId = setInterval(() => {
-    const currentTime = Date.now();
-    const diff = currentTime - userSelectedDate; // ??????????????????????????????????????????
-
-    const time = formatTime(diff);
-    // updateTimeDisplay(clockFace).textContent = time; ????????????????????????????????????????????????????
-
-    console.log(time);
-  });
-});
-
-// Вибір дати
-
-document.querySelector('[data-start]').addEventListener('click', () => {
-  const userSelectedDate = datePicker.selectedDates[0];
-  const currentDate = new Date();
-
-  if (userSelectedDate > currentDate) {
-    const difference = userSelectedDate - currentDate;
-    const intervalId = setInterval(() => {
-      const timeLeft = userSelectedDate - new Date();
-      if (timeLeft <= 0) {
-        clearInterval(intervalId);
-        updateTimeDisplay({
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0,
-        });
-        document.querySelector('[data-start]').disabled = false;
-      } else {
-        const timeLeftObj = formatTime(timeLeft);
-        updateTimeDisplay(timeLeftObj);
-      }
-    }, 1000);
-    document.querySelector('[data-start]').disabled = true;
-  }
-});
-
-// Форматування часу в години
-
-const formatTime = milliseconds => {
-  const seconds = Math.floor((milliseconds / 1000) % 60);
-  const minutes = Math.floor((milliseconds / 1000 / 60) % 60);
-  const hours = Math.floor((milliseconds / 1000 / 60 / 60) % 24);
-
-  return [
-    hours.toString().padStart(2, '0'),
-    minutes.toString().padStart(2, '0'),
-    seconds.toString().padStart(2, '0'),
-  ].join(':');
 };
 
-// Зміна часу на годиннику
+function convertMs(ms) {
+  // Number of milliseconds per unit of time
+  const second = 1000;
+  const minute = second * 60;
+  const hour = minute * 60;
+  const day = hour * 24;
 
-function updateTimeDisplay({ days, hours, minutes, seconds }) {
-  document.querySelector('[data-days]').textContent = time;
-  document.querySelector('[data-hours]').textContent = time;
-  document.querySelector('[data-minutes]').textContent = time;
-  document.querySelector('[data-seconds]').textContent = time;
+  // Remaining days
+  const days = Math.floor(ms / day);
+  // Remaining hours
+  const hours = Math.floor((ms % day) / hour);
+  // Remaining minutes
+  const minutes = Math.floor(((ms % day) % hour) / minute);
+  // Remaining seconds
+  const seconds = Math.floor((((ms % day) % hour) % minute) / second);
+
+  return { days, hours, minutes, seconds };
 }
 
-function addLeadingZero(value) {
-  return String(value).padStart(2, '0');
-}
+const calendar = flatpickr('#datetime-picker', options);
+const inputTime = document.querySelector('#datetime-picker');
+const startButton = document.querySelector('button');
+const showTime = document.querySelectorAll('.value');
+
+console.log(showTime);
+
+startButton.disabled = true;
+
+startButton.addEventListener('click', event => {
+  const intervalId = setInterval(() => {
+    timeInterval = userSelectedDate - new Date();
+    startButton.classList.remove(`btn-active`);
+    if (timeInterval < 1) {
+      startButton.disabled = true;
+      clearInterval(intervalId);
+      return;
+    }
+    const timer = convertMs(timeInterval);
+    showTime[0].innerText = timer.days.toString().padStart(2, '0');
+    showTime[1].innerText = timer.hours.toString().padStart(2, '0');
+    showTime[2].innerText = timer.minutes.toString().padStart(2, '0');
+    showTime[3].innerText = timer.seconds.toString().padStart(2, '0');
+  }, 1000);
+});
